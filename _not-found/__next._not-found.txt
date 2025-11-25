@@ -1,4 +1,4 @@
 1:"$Sreact.fragment"
 2:I[45862,["/ailoy-assistant-ui-example/_next/static/chunks/6f63e472479c1944.js","/ailoy-assistant-ui-example/_next/static/chunks/af0d10651741228b.js"],"default"]
 3:I[81131,["/ailoy-assistant-ui-example/_next/static/chunks/6f63e472479c1944.js","/ailoy-assistant-ui-example/_next/static/chunks/af0d10651741228b.js"],"default"]
-0:{"buildId":"gD9VoyJOaS-qZaI_HlqAj","rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"loading":null,"isPartial":false}
+0:{"buildId":"342ErX7NPoKsxFh8csMg7","rsc":["$","$1","c",{"children":[null,["$","$L2",null,{"parallelRouterKey":"children","template":["$","$L3",null,{}]}]]}],"loading":null,"isPartial":false}

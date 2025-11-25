@@ -1,7 +1,12 @@
 self.__BUILD_MANIFEST = {
   "__rewrites": {
     "afterFiles": [],
-    "beforeFiles": [],
+    "beforeFiles": [
+      {
+        "source": "/ailoy-assistant-ui-example//_next/:path+",
+        "destination": "/ailoy-assistant-ui-example/_next/:path+"
+      }
+    ],
     "fallback": []
   },
   "sortedPages": [
