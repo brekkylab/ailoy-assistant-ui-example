@@ -1,7 +1,7 @@
 "use client";
 
-import { Assistant } from "./assistant";
+import { Thread } from "@/components/assistant-ui/thread";
 
 export default function Home() {
-  return <Assistant />;
+  return <Thread />;
 }

@@ -6,21 +6,24 @@ import {
   useMemo,
   useState,
 } from "react";
-import * as ai from "ailoy-web";
 import {
   ExternalStoreThreadData,
   ExternalStoreThreadListAdapter,
 } from "@assistant-ui/react";
 import { useAiloyAgentContext } from "./ailoy-agent-provider";
+import type { AssistantUiMessage } from "@/lib/message-converter";
 
 // Create a context for thread management
 const ThreadContext = createContext<{
   currentThreadId: string;
   setCurrentThreadId: (id: string) => void;
-  threads: Map<string, ai.Message[]>;
-  setThreads: React.Dispatch<React.SetStateAction<Map<string, ai.Message[]>>>;
-  currentThreadMessages: ai.Message[];
-  appendThreadMessage: (threadId: string, message: ai.Message) => void;
+  threads: Map<string, AssistantUiMessage[]>;
+  setThreads: React.Dispatch<
+    React.SetStateAction<Map<string, AssistantUiMessage[]>>
+  >;
+  currentThreadMessages: AssistantUiMessage[];
+  appendThreadMessage: (threadId: string, message: AssistantUiMessage) => void;
+  renameThread: (threadId: string, newTitle: string) => void;
   threadListAdapter: ExternalStoreThreadListAdapter;
 }>({
   currentThreadId: "default",
@@ -29,17 +32,15 @@ const ThreadContext = createContext<{
   setThreads: () => {},
   currentThreadMessages: [],
   appendThreadMessage: () => {},
+  renameThread: () => {},
   threadListAdapter: {},
 });
 
 export function ThreadProvider({ children }: { children: ReactNode }) {
-  const [regularThreadList, setRegularThreadList] = useState<
+  const [threadList, setThreadList] = useState<
     ExternalStoreThreadData<"regular">[]
   >([{ id: "default", status: "regular", title: "New Chat" }]);
-  const [archivedThreadList, setArchivedThreadList] = useState<
-    ExternalStoreThreadData<"archived">[]
-  >([]);
-  const [threads, setThreads] = useState<Map<string, ai.Message[]>>(
+  const [threads, setThreads] = useState<Map<string, AssistantUiMessage[]>>(
     new Map([["default", []]]),
   );
   const [currentThreadId, setCurrentThreadId] = useState("default");
@@ -48,7 +49,10 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
     return threads.get(currentThreadId) ?? [];
   }, [currentThreadId, threads]);
 
-  const appendThreadMessage = (threadId: string, newMessage: ai.Message) => {
+  const appendThreadMessage = (
+    threadId: string,
+    newMessage: AssistantUiMessage,
+  ) => {
     setThreads((prev) => {
       const next = new Map(prev);
       const messages = next.get(threadId) ?? [];
@@ -57,24 +61,27 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const { isAgentLoading, modelConfig } = useAiloyAgentContext();
+  const renameThread = (threadId: string, newTitle: string) => {
+    setThreadList((prev) =>
+      prev.map((t) => (t.id === threadId ? { ...t, title: newTitle } : t)),
+    );
+  };
+
+  const { isModelLoading, selectedModel } = useAiloyAgentContext();
 
   useEffect(() => {
     // Clear all threads whenever modelConfig is changed
-    setRegularThreadList([
-      { id: "default", status: "regular", title: "New Chat" },
-    ]);
+    setThreadList([{ id: "default", status: "regular", title: "New Chat" }]);
     setThreads(new Map([["default", []]]));
-  }, [modelConfig]);
+  }, [selectedModel]);
 
   const threadListAdapter: ExternalStoreThreadListAdapter = {
     threadId: currentThreadId,
-    threads: regularThreadList,
-    archivedThreads: archivedThreadList,
-    isLoading: isAgentLoading,
+    threads: threadList,
+    isLoading: isModelLoading,
     onSwitchToNewThread: () => {
       const newId = `thread-${Date.now()}`;
-      setRegularThreadList((prev) => [
+      setThreadList((prev) => [
         ...prev,
         {
           id: newId,
@@ -89,32 +96,12 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
       setCurrentThreadId(threadId);
     },
     onRename: (threadId, newTitle) => {
-      setRegularThreadList((prev) =>
+      setThreadList((prev) =>
         prev.map((t) => (t.id === threadId ? { ...t, title: newTitle } : t)),
       );
     },
-    onArchive: (threadId) => {
-      const targetThread = regularThreadList.find((t) => t.id === threadId);
-      if (targetThread) {
-        setRegularThreadList((prev) =>
-          prev.filter((t) => t.id !== targetThread.id),
-        );
-        setArchivedThreadList((prev) => [
-          ...prev,
-          { ...targetThread, status: "archived" },
-        ]);
-        setThreads((prev) => {
-          const next = new Map(prev);
-          next.delete(threadId);
-          return next;
-        });
-        if (currentThreadId === threadId) {
-          setCurrentThreadId("default");
-        }
-      }
-    },
     onDelete: (threadId) => {
-      setRegularThreadList((prev) => prev.filter((t) => t.id !== threadId));
+      setThreadList((prev) => prev.filter((t) => t.id !== threadId));
       setThreads((prev) => {
         const next = new Map(prev);
         next.delete(threadId);
@@ -135,6 +122,7 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
         setThreads,
         currentThreadMessages,
         appendThreadMessage,
+        renameThread,
         threadListAdapter,
       }}
     >

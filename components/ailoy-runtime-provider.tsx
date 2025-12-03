@@ -15,6 +15,7 @@ import {
   convertMessage,
   convertMessageDelta,
   AssistantUiMessage,
+  restoreMessages,
 } from "@/lib/message-converter";
 
 export function AiloyRuntimeProvider({
@@ -25,12 +26,13 @@ export function AiloyRuntimeProvider({
   );
   const [isAnswering, setIsAnswering] = useState<boolean>(false);
 
-  const { agent, isAgentLoading, isReasoning } = useAiloyAgentContext();
+  const { agent, isModelLoading, isReasoning } = useAiloyAgentContext();
 
   const {
     currentThreadId,
     currentThreadMessages,
     appendThreadMessage,
+    renameThread,
     threadListAdapter,
   } = useThreadContext();
 
@@ -62,12 +64,17 @@ export function AiloyRuntimeProvider({
       role: "user",
       contents: userContents,
     };
-    appendThreadMessage(currentThreadId, newMessage);
+    appendThreadMessage(currentThreadId, convertMessage(newMessage));
+    // Rename thread if this is a first message in this thread
+    if (currentThreadMessages.length === 0) {
+      renameThread(currentThreadId, message.content[0].text.substring(0, 30));
+    }
+
     setIsAnswering(true);
 
     let accumulated: ai.MessageDelta | null = null;
     for await (const { delta, finish_reason } of agent.runDelta(
-      [...currentThreadMessages, newMessage],
+      [...restoreMessages(currentThreadMessages), newMessage],
       {
         inference: {
           thinkEffort: isReasoning ? "enable" : "disable",
@@ -82,7 +89,7 @@ export function AiloyRuntimeProvider({
 
       if (finish_reason !== undefined) {
         let newMessage = ai.finishMessageDelta(accumulated);
-        appendThreadMessage(currentThreadId, newMessage);
+        appendThreadMessage(currentThreadId, convertMessage(newMessage));
         setOngoingMessage(null);
         accumulated = null;
       }
@@ -91,16 +98,16 @@ export function AiloyRuntimeProvider({
   };
 
   const convertedMessages: AssistantUiMessage[] = useMemo(() => {
-    let converted = currentThreadMessages.map(convertMessage);
+    let messages = currentThreadMessages;
     if (ongoingMessage !== null) {
       let convertedDelta = convertMessageDelta(ongoingMessage);
-      converted = [...converted, convertedDelta];
+      messages = [...messages, convertedDelta];
     }
-    return converted;
+    return messages;
   }, [currentThreadMessages, ongoingMessage]);
 
   const runtime = useExternalStoreRuntime({
-    isLoading: isAgentLoading,
+    isLoading: isModelLoading,
     isDisabled: agent === undefined,
     isRunning: isAnswering,
     messages: useExternalMessageConverter({

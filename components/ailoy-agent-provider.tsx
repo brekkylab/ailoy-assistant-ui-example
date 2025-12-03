@@ -6,7 +6,7 @@ import {
   useState,
 } from "react";
 import * as ai from "ailoy-web";
-import { useLocalStorage } from "usehooks-ts";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 export interface AiloyLocalLMConfig {
   type: "local";
@@ -15,53 +15,87 @@ export interface AiloyLocalLMConfig {
 
 export interface AiloyAPILMConfig {
   type: "api";
-  spec: ai.APISpecification;
+  spec: "OpenAI" | "Gemini" | "Claude" | "Grok";
   modelName: string;
-  apiKey: string;
 }
 
 export type AiloyLMConfig = AiloyLocalLMConfig | AiloyAPILMConfig;
 
+export type APIKeys = Record<AiloyAPILMConfig["spec"], string | undefined>;
+const emptyApiKeys = {
+  OpenAI: undefined,
+  Gemini: undefined,
+  Claude: undefined,
+  Grok: undefined,
+};
+
+export interface Tool {
+  id: string;
+  name: string;
+  description: string;
+  icon: string;
+}
+
 const AiloyAgentContext = createContext<{
   isWebGPUSupported: boolean;
   agent: ai.Agent | undefined;
-  isAgentLoading: boolean;
-  agentLoadingProgress: ai.CacheProgress | undefined;
-  modelConfig: AiloyLMConfig | undefined;
-  setModelConfig: (config: AiloyLMConfig) => void;
+  isModelLoading: boolean;
+  modelLoadingProgress: ai.CacheProgress | undefined;
+  downloadedModels: string[];
+  setDownloadedModels: (models: string[]) => void;
+  selectedModel: AiloyLMConfig | undefined;
+  setSelectedModel: (config: AiloyLMConfig | undefined) => void;
+  apiKeys: APIKeys;
+  setApiKey: (provider: keyof APIKeys, key: string | undefined) => void;
   isReasoning: boolean;
   setIsReasoning: (thinking: boolean) => void;
+  selectedTools: Tool[];
+  setSelectedTools: (tools: Tool[]) => void;
 }>({
   isWebGPUSupported: false,
   agent: undefined,
-  isAgentLoading: false,
-  agentLoadingProgress: undefined,
-  modelConfig: { type: "local", modelName: "Qwen/Qwen3-0.6B" },
-  setModelConfig: () => {},
+  isModelLoading: false,
+  modelLoadingProgress: undefined,
+  downloadedModels: [],
+  setDownloadedModels: () => {},
+  selectedModel: undefined,
+  setSelectedModel: () => {},
+  apiKeys: emptyApiKeys,
+  setApiKey: () => {},
   isReasoning: false,
   setIsReasoning: () => {},
+  selectedTools: [],
+  setSelectedTools: () => {},
 });
 
 export function AiloyAgentProvider({
   children,
 }: Readonly<{ children: ReactNode }>) {
-  const [isRendered, setIsRendered] = useState<boolean>(false);
   const [isWebGPUSupported, setIsWebGPUSupported] = useState<boolean>(false);
-  const [modelConfig, setModelConfig] = useLocalStorage<
+  const [downloadedModels, setDownloadedModels] = useLocalStorage<string[]>(
+    "ailoy/downloadedModels",
+    [],
+  );
+  const [selectedModel, setSelectedModel] = useLocalStorage<
     AiloyLMConfig | undefined
-  >("ailoy-model-config", undefined, {
-    initializeWithValue: true,
-  });
+  >("ailoy/selectedModel", undefined);
+  const [apiKeys, setApiKeys] = useLocalStorage<APIKeys>(
+    "ailoy/apiKeys",
+    emptyApiKeys,
+  );
+  const [selectedTools, setSelectedTools] = useLocalStorage<Tool[]>(
+    "ailoy/selectedTools",
+    [],
+  );
 
   const [agent, setAgent] = useState<ai.Agent | undefined>(undefined);
-  const [isAgentLoading, setIsAgentLoading] = useState<boolean>(false);
-  const [agentLoadingProgress, setAgentLoadingProgress] = useState<
+  const [isModelLoading, setIsModelLoading] = useState<boolean>(false);
+  const [modelLoadingProgress, setModelLoadingProgress] = useState<
     ai.CacheProgress | undefined
   >(undefined);
   const [isReasoning, setIsReasoning] = useState<boolean>(false);
 
   useEffect(() => {
-    setIsRendered(true);
     (async () => {
       const { supported } = await ai.isWebGPUSupported();
       setIsWebGPUSupported(supported);
@@ -71,52 +105,81 @@ export function AiloyAgentProvider({
   useEffect(() => {
     setAgent(undefined);
 
-    if (!isRendered) return;
-    if (modelConfig === undefined) {
-      // Set default model config if not present
-      setModelConfig({ type: "local", modelName: "Qwen/Qwen3-0.6B" });
+    if (selectedModel === undefined) return;
+    if (selectedModel.type === "local" && !isWebGPUSupported) {
       return;
     }
-
-    if (modelConfig.type === "local" && !isWebGPUSupported) {
+    if (
+      selectedModel.type === "api" &&
+      apiKeys[selectedModel.spec] === undefined
+    ) {
       return;
     }
 
     (async () => {
-      setIsAgentLoading(true);
+      setIsModelLoading(true);
 
       let model: ai.LangModel;
-      if (modelConfig.type === "local") {
-        model = await ai.LangModel.newLocal(modelConfig.modelName, {
-          progressCallback: setAgentLoadingProgress,
+      if (selectedModel.type === "local") {
+        model = await ai.LangModel.newLocal(selectedModel.modelName, {
+          progressCallback: setModelLoadingProgress,
         });
       } else {
         model = await ai.LangModel.newStreamAPI(
-          modelConfig.spec,
-          modelConfig.modelName,
-          modelConfig.apiKey,
+          selectedModel.spec,
+          selectedModel.modelName,
+          apiKeys[selectedModel.spec]!,
         );
       }
 
       const agent = new ai.Agent(model);
       setAgent(agent);
 
-      setAgentLoadingProgress(undefined);
-      setIsAgentLoading(false);
+      setModelLoadingProgress(undefined);
+      setIsModelLoading(false);
     })();
-  }, [modelConfig, isRendered, isWebGPUSupported]);
+  }, [selectedModel, apiKeys, isWebGPUSupported]);
+
+  useEffect(() => {
+    if (agent === undefined) return;
+
+    // TODO: add clearTools
+    // agent.clearTools();
+
+    for (const tool of selectedTools) {
+      console.log("tool: ", tool);
+      if (tool.id === "web_search_duckduckgo") {
+        console.log("adding web_search_duckduckgo tool");
+        const tool = ai.Tool.newBuiltin("web_search_duckduckgo", {
+          base_url: "https://web-example-proxy.ailoy.co",
+        });
+        agent.addTool(tool);
+      }
+    }
+    setAgent(agent);
+  }, [agent, selectedTools]);
+
+  const setApiKey = (provider: keyof APIKeys, key: string | undefined) => {
+    setApiKeys((prev) => ({ ...prev, [provider]: key }));
+  };
 
   return (
     <AiloyAgentContext.Provider
       value={{
         isWebGPUSupported,
         agent,
-        isAgentLoading,
-        agentLoadingProgress,
-        modelConfig,
-        setModelConfig,
+        isModelLoading,
+        modelLoadingProgress,
+        downloadedModels,
+        setDownloadedModels,
+        selectedModel,
+        setSelectedModel,
+        apiKeys,
+        setApiKey,
         isReasoning,
         setIsReasoning,
+        selectedTools,
+        setSelectedTools,
       }}
     >
       {children}

@@ -81,7 +81,7 @@ export function convertContentPart(part: ai.Part): AssistantUiMessagePart {
     case "function":
       let converted: AssistantUiToolCallPart = {
         type: "tool-call",
-        toolCallId: part.id,
+        toolCallId: part.id ?? "",
         toolName: part.function.name,
       };
       if (typeof part.function.arguments === "string") {
@@ -128,9 +128,16 @@ export function convertMessage(message: ai.Message): AssistantUiMessage {
         content: contents,
       };
     case "tool":
-      let toolResult = (
-        convertContentPart(message.contents[0]) as TextMessagePart
-      ).text;
+      const part = message.contents[0];
+      let toolResult: string;
+      if (part.type === "text") {
+        toolResult = part.text;
+      } else if (part.type === "value") {
+        toolResult = JSON.stringify(part.value);
+      } else {
+        toolResult = "";
+      }
+
       return {
         role: "tool",
         toolCallId: message.id ?? "",
@@ -217,4 +224,39 @@ export function convertMessageDelta(
         content: [],
       };
   }
+}
+
+export function restoreMessages(messages: AssistantUiMessage[]): ai.Message[] {
+  let restored: ai.Message[] = [];
+  for (const msg of messages) {
+    // Skip tool results
+    if (msg.role === "tool") {
+      continue;
+    }
+
+    let contents: ai.Part[] = [];
+    for (const content of msg.content) {
+      if (typeof content === "string") {
+        contents.push({ type: "text", text: content });
+      } else if (content.type === "text") {
+        contents.push({ type: "text", text: content.text });
+      } else if (content.type === "reasoning") {
+        // Skip reasoning
+      } else if (content.type === "tool-call") {
+        // Skip tool calls
+      } else if (content.type === "image") {
+        contents.push({
+          type: "image",
+          image: { type: "url", url: content.image },
+        });
+      } else {
+        throw new Error("Unsupported content type");
+      }
+    }
+    restored.push({
+      role: msg.role,
+      contents,
+    });
+  }
+  return restored;
 }

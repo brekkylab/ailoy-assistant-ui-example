@@ -36,6 +36,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { useAiloyAgentContext } from "../ailoy-agent-provider";
+import Link from "next/link";
 
 export const Thread: FC = () => {
   return (
@@ -48,11 +49,7 @@ export const Thread: FC = () => {
           }}
         >
           <ThreadPrimitive.Viewport className="aui-thread-viewport relative flex flex-1 flex-col overflow-x-auto overflow-y-scroll px-4">
-            <ThreadPrimitive.If disabled>
-              <ThreadLoading />
-            </ThreadPrimitive.If>
-
-            <ThreadPrimitive.If empty disabled={false}>
+            <ThreadPrimitive.If empty>
               <ThreadWelcome />
             </ThreadPrimitive.If>
 
@@ -90,35 +87,9 @@ const ThreadScrollToBottom: FC = () => {
   );
 };
 
-const ThreadLoading: FC = () => {
-  const { isWebGPUSupported, agentLoadingProgress } = useAiloyAgentContext();
-  const loadingPercent =
-    agentLoadingProgress !== undefined
-      ? Math.round(
-          (agentLoadingProgress.current / agentLoadingProgress.total) * 100,
-        )
-      : 0;
-
-  if (!isWebGPUSupported) {
-    return (
-      <div className="mx-auto my-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col justify-center">
-        <div className="text-2xl font-semibold">
-          Sorry, your environment does not support WebGPU.
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="mx-auto my-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col justify-center">
-      <div className="text-2xl font-semibold">
-        Initializing Ailoy Agent... {loadingPercent}%
-      </div>
-    </div>
-  );
-};
-
 const ThreadWelcome: FC = () => {
+  const { selectedModel } = useAiloyAgentContext();
+
   return (
     <div className="aui-thread-welcome-root mx-auto my-auto flex w-full max-w-[var(--thread-max-width)] flex-grow flex-col">
       <div className="aui-thread-welcome-center flex w-full flex-grow flex-col items-center justify-center">
@@ -138,8 +109,30 @@ const ThreadWelcome: FC = () => {
             transition={{ delay: 0.1 }}
             className="aui-thread-welcome-message-motion-2 text-2xl text-muted-foreground/65"
           >
-            How can I help you today?
+            {selectedModel !== undefined
+              ? "How can I help you?"
+              : "Please select a language model to use for your assistant."}
           </m.div>
+
+          {selectedModel === undefined && (
+            <m.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 10 }}
+              transition={{ delay: 0.1 }}
+              className="aui-thread-welcome-message-motion-2 mt-4"
+            >
+              <Link href="/models">
+                <Button
+                  type="button"
+                  variant="default"
+                  className="cursor-pointer"
+                >
+                  Select Model
+                </Button>
+              </Link>
+            </m.div>
+          )}
         </div>
       </div>
       <ThreadSuggestions />
@@ -152,9 +145,9 @@ const ThreadSuggestions: FC = () => {
     <div className="aui-thread-welcome-suggestions grid w-full gap-2 pb-4 @md:grid-cols-2">
       {[
         {
-          title: "What's the weather",
-          label: "in San Francisco?",
-          action: "What's the weather in San Francisco?",
+          title: "Search for Ailoy",
+          label: "the AI agent framework.",
+          action: "Search for Ailoy, the AI agent framework.",
         },
         {
           title: "Explain React hooks",
