@@ -1,6 +1,7 @@
 "use client";
 
-import { Plus, Trash2 } from "lucide-react";
+import { CircleQuestionMark, Plus, Trash2 } from "lucide-react";
+import Image from "next/image";
 import { type FC, useEffect, useMemo, useState } from "react";
 
 import {
@@ -119,7 +120,7 @@ const MCPClientListItem: FC<{ client: MCPClient }> = ({ client }) => {
         <Button
           size="sm"
           variant="destructive"
-          className="gap-2"
+          className="gap-2 cursor-pointer"
           onClick={handleRemoveClient}
         >
           <Trash2 size={16} />
@@ -196,7 +197,7 @@ const MCPClientDialog: FC = () => {
       onOpenChange={setMcpDialogOpened}
     >
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2">
+        <Button size="sm" className="gap-2 cursor-pointer">
           <Plus size={16} />
           <span className="hidden sm:inline">Add MCP Client</span>
         </Button>
@@ -224,6 +225,7 @@ const MCPClientDialog: FC = () => {
           </div>
           <div className="flex justify-end gap-2">
             <Button
+              className="cursor-pointer"
               variant="outline"
               onClick={() => {
                 setMcpDialogOpened(false);
@@ -233,11 +235,64 @@ const MCPClientDialog: FC = () => {
             >
               Cancel
             </Button>
-            <Button onClick={handleAddMcpClient} disabled={isMCPAdding}>
+            <Button
+              className="cursor-pointer"
+              onClick={handleAddMcpClient}
+              disabled={isMCPAdding}
+            >
               {isMCPAdding ? <Spinner /> : "Add"}
             </Button>
           </div>
         </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+const MCPHelpDialog: FC = () => {
+  return (
+    <Dialog>
+      <DialogTrigger>
+        <CircleQuestionMark className="text-gray-400 cursor-pointer" />
+      </DialogTrigger>
+      <DialogContent className="w-full sm:max-w-4xl">
+        <DialogHeader>
+          <DialogTitle className="text-left">Using MCP Tools</DialogTitle>
+          <DialogDescription className="text-left">
+            You can register MCP tools with your agent by adding MCP clients
+            that support{" "}
+            <a
+              href="https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="underline">Streamable HTTP Transports</span>
+            </a>
+            .
+            <br />
+            <br />
+            One of the simplest ways to quickly test MCP tools is to use{" "}
+            <a
+              href="https://smithery.ai"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <span className="underline">Smithery</span>
+            </a>
+            .
+            <br />
+            Copy the MCP server URL by clicking the link below on the Smithery
+            page, and use the link to add the MCP client.
+            <Image
+              src="/img/mcp-smithery.png"
+              alt="mcp-smithery"
+              width={0}
+              height={0}
+              sizes="100vw"
+              style={{ width: "100%", height: "auto" }}
+            />
+          </DialogDescription>
+        </DialogHeader>
       </DialogContent>
     </Dialog>
   );
@@ -266,7 +321,10 @@ export default function ToolsPage() {
 
           {/* MCP Section */}
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-lg font-medium text-gray-800">MCP Clients</h3>
+            <div className="flex gap-2">
+              <h3 className="text-lg font-medium text-gray-800">MCP Clients</h3>
+              <MCPHelpDialog />
+            </div>
             <MCPClientDialog />
           </div>
 
