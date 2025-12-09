@@ -60,6 +60,8 @@ const LocalModelListItem: FC<{
     setDownloading(false);
     setProgress(0);
     setDownloadedModels([...downloadedModels, modelName]);
+    // Automatically select the downloaded model
+    setSelectedModel({ type: "local", modelName });
   };
 
   const handleRemoveModel = async () => {
@@ -109,7 +111,7 @@ const LocalModelListItem: FC<{
               disabled={!isWebGPUSupported || downloading}
               className="cursor-pointer gap-2"
             >
-              <Download size={16} />
+              {downloading ? <Spinner /> : <Download size={16} />}
               <span className="hidden sm:inline">
                 {downloading ? "Downloading..." : "Download"}
               </span>
