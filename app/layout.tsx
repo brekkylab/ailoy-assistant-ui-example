@@ -44,6 +44,21 @@ export default function RootLayout({
                     <header className="flex h-16 shrink-0 items-center gap-2 border-b px-4">
                       <SidebarTrigger />
                       <Separator orientation="vertical" className="mr-2 h-4" />
+                      <div className="flex w-full justify-end">
+                        <a
+                          href="https://github.com/brekkylab/ailoy"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          {/** biome-ignore lint/performance/noImgElement: github */}
+                          <img
+                            src="https://upload.wikimedia.org/wikipedia/commons/9/91/Octicons-mark-github.svg"
+                            width={24}
+                            height={24}
+                            alt="ailoy-github"
+                          />
+                        </a>
+                      </div>
                     </header>
                     <div className="flex-1 overflow-hidden">{children}</div>
                   </SidebarInset>
