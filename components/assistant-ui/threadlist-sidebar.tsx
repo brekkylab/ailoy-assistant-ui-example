@@ -1,6 +1,7 @@
-import { Github } from "lucide-react";
+import { BookOpenText, Brain, Bug, MessageSquare, Wrench } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 import type * as React from "react";
 
 import { ThreadList } from "@/components/assistant-ui/thread-list";
@@ -13,11 +14,22 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
+  SidebarSeparator,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 export function ThreadListSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { setOpenMobile } = useSidebar();
+
+  const handleMenuClicked = (route: string) => {
+    setOpenMobile(false);
+    router.push(route);
+  };
+
   return (
     <Sidebar {...props}>
       <SidebarHeader className="aui-sidebar-header mb-2 border-b">
@@ -25,11 +37,7 @@ export function ThreadListSidebar({
           <SidebarMenu>
             <SidebarMenuItem>
               <SidebarMenuButton size="lg" asChild>
-                <Link
-                  href="https://brekkylab.github.io/ailoy"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <Link href="/">
                   <Image
                     src="https://brekkylab.github.io/ailoy/img/logo.png"
                     width={32}
@@ -48,7 +56,36 @@ export function ThreadListSidebar({
         </div>
       </SidebarHeader>
       <SidebarContent className="aui-sidebar-content px-2">
-        <ThreadList />
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            className="cursor-pointer"
+            onClick={() => handleMenuClicked("/")}
+          >
+            <MessageSquare />
+            <span className="font-bold">Chat</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            className="cursor-pointer"
+            onClick={() => handleMenuClicked("/models")}
+          >
+            <Brain />
+            <span className="font-bold">Models</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarMenuItem>
+          <SidebarMenuButton
+            className="cursor-pointer"
+            onClick={() => handleMenuClicked("/tools")}
+          >
+            <Wrench />
+            <span className="font-bold">Tools</span>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+        <SidebarSeparator className="mx-0" />
+
+        {pathname === "/" && <ThreadList />}
       </SidebarContent>
       <SidebarRail />
       <SidebarFooter className="aui-sidebar-footer border-t">
@@ -56,21 +93,39 @@ export function ThreadListSidebar({
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link
-                href="https://github.com/brekkylab/ailoy-assistant-ui-example"
+                href="https://github.com/brekkylab/ailoy/issues"
                 target="_blank"
               >
-                <div className="aui-sidebar-footer-icon-wrapper flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                  <Github className="aui-sidebar-footer-icon size-4" />
+                <div className="aui-sidebar-footer-icon-wrapper flex aspect-square size-8 items-center justify-center rounded-lg border border-sidebar-border text-sidebar-foreground">
+                  <Bug className="aui-sidebar-footer-icon size-4" />
                 </div>
-                <div className="aui-sidebar-footer-heading flex flex-col gap-0.5 leading-none text-gray-600">
+                <div className="aui-sidebar-footer-heading flex flex-col gap-0.5 leading-none text-muted-foreground">
+                  <p>Have any troubles?</p>
+                  <span>
+                    Leave an{" "}
+                    <span className="text-accent-foreground font-bold">
+                      issue
+                    </span>{" "}
+                    here
+                  </span>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <Link href="https://brekkylab.github.io/ailoy" target="_blank">
+                <div className="aui-sidebar-footer-icon-wrapper flex aspect-square size-8 items-center justify-center rounded-lg border border-sidebar-border text-sidebar-foreground">
+                  <BookOpenText className="aui-sidebar-footer-icon size-4" />
+                </div>
+                <div className="aui-sidebar-footer-heading flex flex-col gap-0.5 leading-none text-muted-foreground">
                   <p>
                     Powered by{" "}
-                    <span className="aui-sidebar-footer-title font-bold text-black">
+                    <span className="aui-sidebar-footer-title font-extrabold text-accent-foreground">
                       Ailoy
                     </span>
                   </p>
-
-                  <span>View Source</span>
+                  <span>View Documentation</span>
                 </div>
               </Link>
             </SidebarMenuButton>

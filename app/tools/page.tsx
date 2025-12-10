@@ -6,7 +6,7 @@ import { type FC, useEffect, useMemo, useState } from "react";
 
 import {
   type BuiltinTool,
-  type MCPClient,
+  type MCPServer,
   mcpEventTarget,
   useAiloyAgentContext,
 } from "@/components/ailoy-agent-provider";
@@ -59,7 +59,7 @@ const BuiltinToolListItem: FC<{ tool: BuiltinTool }> = ({ tool }) => {
   return (
     <div
       key={tool.id}
-      className="flex items-center gap-4 rounded-lg border border-gray-200 p-4 hover:bg-gray-50"
+      className="flex items-center gap-4 rounded-lg border p-4"
     >
       <div className="flex flex-1 items-center gap-3">
         <Checkbox
@@ -71,73 +71,71 @@ const BuiltinToolListItem: FC<{ tool: BuiltinTool }> = ({ tool }) => {
         <div>
           <Label
             htmlFor={tool.id}
-            className="cursor-pointer font-medium text-gray-900"
+            className="cursor-pointer font-medium text-primary"
           >
             {tool.name}
           </Label>
-          <p className="text-sm text-gray-600">{tool.description}</p>
+          <p className="text-sm text-muted-foreground">{tool.description}</p>
         </div>
       </div>
     </div>
   );
 };
 
-const MCPClientListItem: FC<{ client: MCPClient }> = ({ client }) => {
+const MCPServerListItem: FC<{ server: MCPServer }> = ({ server }) => {
   const {
     addMCPTool,
     removeMCPTool,
     mcpTools,
     selectedMCPTools,
-    removeMCPClient,
+    removeMCPServer,
   } = useAiloyAgentContext();
 
   const tools = useMemo(() => {
-    return mcpTools[client.url] ?? [];
-  }, [mcpTools, client]);
+    return mcpTools[server.url] ?? [];
+  }, [mcpTools, server]);
 
-  const selectedMCPToolsForClient = useMemo(() => {
-    return selectedMCPTools[client.url] ?? [];
-  }, [client, selectedMCPTools]);
+  const selectedMCPToolsForServer = useMemo(() => {
+    return selectedMCPTools[server.url] ?? [];
+  }, [server, selectedMCPTools]);
 
   const handleMCPToolToggle = (checked: boolean, toolName: string) => {
     if (checked) {
-      addMCPTool(client.url, toolName);
+      addMCPTool(server.url, toolName);
     } else {
-      removeMCPTool(client.url, toolName);
+      removeMCPTool(server.url, toolName);
     }
   };
 
-  const handleRemoveClient = () => {
-    removeMCPClient(client.url);
+  const handleRemoveServer = () => {
+    removeMCPServer(server.url);
   };
 
   return (
-    <div className="rounded-lg border border-gray-200 p-4">
-      <div className="mb-4 flex items-center justify-between">
-        <div>
-          <p className="text-xs break-all text-gray-600">{client.url}</p>
-        </div>
+    <div className="rounded-lg border p-4">
+      <div className="mb-4 flex items-center justify-between gap-4">
+        <p className="text-xs break-all text-muted-foreground">{server.url}</p>
         <Button
           size="sm"
           variant="destructive"
           className="gap-2 cursor-pointer"
-          onClick={handleRemoveClient}
+          onClick={handleRemoveServer}
         >
           <Trash2 size={16} />
           <span className="hidden sm:inline">Remove</span>
         </Button>
       </div>
 
-      {/* MCP client tools */}
+      {/* MCP server tools */}
       <div className="mt-4 space-y-3">
         {tools.map((tool) => (
           <div
             key={tool.name}
-            className="flex items-center gap-4 rounded-lg border border-gray-200 p-3"
+            className="flex items-center gap-4 rounded-lg border p-3"
           >
             <Checkbox
               id={tool.name}
-              checked={selectedMCPToolsForClient.includes(tool.name)}
+              checked={selectedMCPToolsForServer.includes(tool.name)}
               onCheckedChange={(checked) =>
                 handleMCPToolToggle(checked as boolean, tool.name)
               }
@@ -145,11 +143,11 @@ const MCPClientListItem: FC<{ client: MCPClient }> = ({ client }) => {
             <div className="flex-1 min-w-0">
               <Label
                 htmlFor={tool.name}
-                className="cursor-pointer font-medium text-gray-900 block"
+                className="cursor-pointer font-medium text-primary truncate"
               >
                 {tool.name}
               </Label>
-              <p className="text-sm text-gray-400 truncate">
+              <p className="text-sm text-muted-foreground truncate">
                 {tool.description}
               </p>
             </div>
@@ -160,12 +158,12 @@ const MCPClientListItem: FC<{ client: MCPClient }> = ({ client }) => {
   );
 };
 
-const MCPClientDialog: FC = () => {
+const MCPServerAddDialog: FC = () => {
   const [mcpDialogOpened, setMcpDialogOpened] = useState<boolean>(false);
   const [mcpUrlInput, setMcpUrlInput] = useState<string>("");
   const [isMCPAdding, setIsMCPAdding] = useState<boolean>(false);
 
-  const { addMCPClient } = useAiloyAgentContext();
+  const { addMCPServer } = useAiloyAgentContext();
 
   // biome-ignore lint/correctness/useExhaustiveDependencies: false-positive
   useEffect(() => {
@@ -181,8 +179,8 @@ const MCPClientDialog: FC = () => {
     };
   }, []);
 
-  const handleAddMcpClient = async () => {
-    addMCPClient(mcpUrlInput);
+  const handleAddMcpServer = async () => {
+    addMCPServer(mcpUrlInput);
     setIsMCPAdding(true);
   };
 
@@ -199,20 +197,25 @@ const MCPClientDialog: FC = () => {
       <DialogTrigger asChild>
         <Button size="sm" className="gap-2 cursor-pointer">
           <Plus size={16} />
-          <span className="hidden sm:inline">Add MCP Client</span>
+          <span className="hidden sm:inline">Add MCP Server</span>
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Add MCP Client</DialogTitle>
-          <DialogDescription>
-            Enter the URL of the MCP streamable HTTP transport.
-            <br />
-            Make sure the server is configured to allow Cross-Origin Resource
-            Sharing (CORS).
-          </DialogDescription>
+          <DialogTitle className="text-left">Add MCP Server</DialogTitle>
+          <DialogDescription />
         </DialogHeader>
         <div className="space-y-4">
+          <div className="space-y-2 text-left text-muted-foreground text-sm">
+            <p>
+              Enter the URL of the MCP server supporting streamable HTTP
+              transport.
+            </p>
+            <p>
+              Make sure the server is configured to allow Cross-Origin Resource
+              Sharing (CORS).
+            </p>
+          </div>
           <div className="space-y-2">
             <Label htmlFor="mcp-url">Server URL</Label>
             <Input
@@ -237,7 +240,7 @@ const MCPClientDialog: FC = () => {
             </Button>
             <Button
               className="cursor-pointer"
-              onClick={handleAddMcpClient}
+              onClick={handleAddMcpServer}
               disabled={isMCPAdding}
             >
               {isMCPAdding ? <Spinner /> : "Add"}
@@ -258,8 +261,11 @@ const MCPHelpDialog: FC = () => {
       <DialogContent className="w-full sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-left">Using MCP Tools</DialogTitle>
-          <DialogDescription className="text-left">
-            You can register MCP tools with your agent by adding MCP clients
+          <DialogDescription />
+        </DialogHeader>
+        <div className="text-left space-y-2 text-muted-foreground text-sm">
+          <p>
+            You can register MCP tools with your agent by adding MCP servers
             that support{" "}
             <a
               href="https://modelcontextprotocol.io/specification/2025-03-26/basic/transports#streamable-http"
@@ -269,70 +275,69 @@ const MCPHelpDialog: FC = () => {
               <span className="underline">Streamable HTTP Transports</span>
             </a>
             .
-            <br />
-            <br />
+          </p>
+          <p>
             One of the simplest ways to quickly test MCP tools is to use{" "}
             <a
               href="https://smithery.ai"
               target="_blank"
               rel="noopener noreferrer"
             >
-              <span className="underline">Smithery</span>
+              <span className="underline font-semibold">Smithery</span>
             </a>
             .
-            <br />
+          </p>
+          <p>
             Copy the MCP server URL by clicking the link below on the Smithery
-            page, and use the link to add the MCP client.
-            <Image
-              src="/img/mcp-smithery.png"
-              alt="mcp-smithery"
-              width={0}
-              height={0}
-              sizes="100vw"
-              style={{ width: "100%", height: "auto" }}
-            />
-          </DialogDescription>
-        </DialogHeader>
+            page, and use the link to add the MCP server.
+          </p>
+          <Image
+            src="/img/mcp-smithery.png"
+            alt="mcp-smithery"
+            width={0}
+            height={0}
+            sizes="100vw"
+            style={{ width: "100%", height: "auto" }}
+          />
+        </div>
       </DialogContent>
     </Dialog>
   );
 };
 
 export default function ToolsPage() {
-  const { mcpClients } = useAiloyAgentContext();
+  const { mcpServers } = useAiloyAgentContext();
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 p-8">
+    <div className="h-full overflow-y-auto p-8">
       <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900">Tools</h1>
+        <h1 className="mb-8 text-3xl font-bold text-primary">Tools</h1>
 
-        <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          {/* Built-in Tools Section */}
-          <div className="mb-8">
-            <h3 className="mb-4 text-lg font-medium text-gray-800">
-              Built-in Tools
-            </h3>
-            <div className="space-y-4">
-              {BUILTIN_TOOLS.map((tool) => (
-                <BuiltinToolListItem key={tool.id} tool={tool} />
-              ))}
-            </div>
-          </div>
-
-          {/* MCP Section */}
-          <div className="mb-4 flex items-center justify-between">
-            <div className="flex gap-2">
-              <h3 className="text-lg font-medium text-gray-800">MCP Clients</h3>
-              <MCPHelpDialog />
-            </div>
-            <MCPClientDialog />
-          </div>
-
-          <div className="space-y-6">
-            {Array.from(mcpClients.entries()).map(([id, client]) => (
-              <MCPClientListItem key={id} client={client} />
+        {/* Built-in Tools Section */}
+        <div className="mb-8">
+          <h3 className="mb-4 text-lg font-medium text-primary">
+            Built-in Tools
+          </h3>
+          <div className="space-y-4">
+            {BUILTIN_TOOLS.map((tool) => (
+              <BuiltinToolListItem key={tool.id} tool={tool} />
             ))}
           </div>
+        </div>
+
+        {/* MCP Section */}
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex gap-2">
+            <h3 className="text-lg font-medium text-primary">MCP Servers</h3>
+            <MCPHelpDialog />
+          </div>
+          <MCPServerAddDialog />
+        </div>
+
+        <div className="space-y-6">
+          {Array.from(mcpServers.entries()).map(([id, server]) => (
+            <MCPServerListItem key={id} server={server} />
+          ))}
         </div>
       </div>
     </div>

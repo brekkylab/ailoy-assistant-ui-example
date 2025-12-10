@@ -51,7 +51,7 @@ export interface BuiltinTool {
   icon: string;
 }
 
-export interface MCPClient {
+export interface MCPServer {
   url: string;
 }
 
@@ -78,9 +78,9 @@ const AiloyAgentContext = createContext<{
   setSystemPrompt: (prompt: string) => void;
   selectedBuiltinTools: BuiltinTool[];
   setSelectedBuiltinTools: (tools: BuiltinTool[]) => void;
-  mcpClients: MCPClient[];
-  addMCPClient: (url: string) => void;
-  removeMCPClient: (url: string) => void;
+  mcpServers: MCPServer[];
+  addMCPServer: (url: string) => void;
+  removeMCPServer: (url: string) => void;
   mcpTools: Record<string, ai.ToolDesc[]>;
   selectedMCPTools: Record<string, string[]>;
   addMCPTool: (url: string, name: string) => void;
@@ -103,9 +103,9 @@ const AiloyAgentContext = createContext<{
   setSystemPrompt: () => {},
   selectedBuiltinTools: [],
   setSelectedBuiltinTools: () => {},
-  mcpClients: [],
-  addMCPClient: () => {},
-  removeMCPClient: () => {},
+  mcpServers: [],
+  addMCPServer: () => {},
+  removeMCPServer: () => {},
   mcpTools: {},
   selectedMCPTools: {},
   addMCPTool: () => {},
@@ -133,11 +133,11 @@ export function AiloyAgentProvider({
     BuiltinTool[]
   >("ailoy/selectedBuiltinTools", []);
 
-  const [mcpClients, setMCPClients] = useLocalStorage<MCPClient[]>(
-    "ailoy/mcpClients",
+  const [mcpServers, setMCPServers] = useLocalStorage<MCPServer[]>(
+    "ailoy/mcpServers",
     [],
   );
-  const [mcpClientsStatus, setMCPClientsStatus] = useState<
+  const [mcpServersStatus, setMCPServersStatus] = useState<
     Record<string, "initializing" | "initialized">
   >({});
   const [mcpTools, setMCPTools] = useLocalStorage<
@@ -202,12 +202,12 @@ export function AiloyAgentProvider({
           new CustomEvent("agent-stream-finished"),
         );
       } else if (msg.type === "mcp-server-registered") {
-        // Update tools of MCP client
+        // Update tools of MCP server
         setMCPTools((prev) => ({
           ...prev,
           [msg.url]: msg.tools,
         }));
-        setMCPClientsStatus((prev) => ({
+        setMCPServersStatus((prev) => ({
           ...prev,
           [msg.url]: "initialized",
         }));
@@ -289,54 +289,54 @@ export function AiloyAgentProvider({
     }
   }, [agentInitialized, selectedBuiltinTools]);
 
-  // Initialize MCP clients after worker is initialized
+  // Initialize MCP servers after worker is initialized
   useEffect(() => {
     if (!agentWorkerReady) return;
-    for (const client of mcpClients) {
-      if (mcpClientsStatus[client.url] === undefined) {
+    for (const server of mcpServers) {
+      if (mcpServersStatus[server.url] === undefined) {
         agentWorkerRef.current?.postMessage({
           type: "add-mcp-server",
-          url: client.url,
+          url: server.url,
         } as AddMCPServer);
-        mcpClientsStatus[client.url] = "initializing";
+        mcpServersStatus[server.url] = "initializing";
       }
     }
-  }, [agentWorkerReady, mcpClients, mcpClientsStatus]);
+  }, [agentWorkerReady, mcpServers, mcpServersStatus]);
 
   // Add selected MCP tools after agent is initialized
   useEffect(() => {
     if (!agentInitialized) return;
 
-    for (const client of mcpClients) {
-      for (const tool of selectedMCPTools[client.url] ?? []) {
+    for (const server of mcpServers) {
+      for (const tool of selectedMCPTools[server.url] ?? []) {
         agentWorkerRef.current?.postMessage({
           type: "add-mcp-tool",
-          url: client.url,
+          url: server.url,
           name: tool,
         } as AddMCPTool);
       }
     }
-  }, [agentInitialized, mcpClients, selectedMCPTools]);
+  }, [agentInitialized, mcpServers, selectedMCPTools]);
 
   const setApiKey = (provider: keyof APIKeys, key: string | undefined) => {
     setApiKeys((prev) => ({ ...prev, [provider]: key }));
   };
 
-  const addMCPClient = (url: string) => {
+  const addMCPServer = (url: string) => {
     agentWorkerRef.current?.postMessage({
       type: "add-mcp-server",
       url,
     } as AddMCPServer);
-    setMCPClients([...mcpClients, { url }]);
+    setMCPServers([...mcpServers, { url }]);
   };
 
-  const removeMCPClient = (url: string) => {
+  const removeMCPServer = (url: string) => {
     agentWorkerRef.current?.postMessage({
       type: "remove-mcp-server",
       url,
     } as RemoveMCPServer);
-    setMCPClients((prev) => prev.filter((client) => client.url !== url));
-    setMCPClientsStatus((prev) => {
+    setMCPServers((prev) => prev.filter((server) => server.url !== url));
+    setMCPServersStatus((prev) => {
       const { [url]: _, ...rest } = prev;
       return rest;
     });
@@ -396,9 +396,9 @@ export function AiloyAgentProvider({
         setSystemPrompt,
         selectedBuiltinTools,
         setSelectedBuiltinTools,
-        mcpClients,
-        addMCPClient,
-        removeMCPClient,
+        mcpServers,
+        addMCPServer,
+        removeMCPServer,
         mcpTools,
         selectedMCPTools,
         addMCPTool,

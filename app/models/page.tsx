@@ -24,6 +24,7 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 
 const LocalModelListItem: FC<{
   modelName: string;
@@ -87,7 +88,7 @@ const LocalModelListItem: FC<{
   }, [isCurrentModelLoading, modelLoadingProgress]);
 
   return (
-    <div className="overflow-hidden rounded-lg border border-gray-200 hover:bg-gray-50">
+    <div className="overflow-hidden rounded-lg border">
       <div className="flex items-center justify-between p-4">
         <div className="flex items-center gap-3">
           <RadioGroupItem
@@ -135,7 +136,7 @@ const LocalModelListItem: FC<{
           )}
         </div>
       </div>
-      <div className="h-1 w-full bg-gray-200">
+      <div className="h-1 w-full">
         {(downloading || isCurrentModelLoading) && (
           <div
             className="h-1 bg-blue-500 transition-all duration-300"
@@ -170,7 +171,7 @@ const APIModelListItem: FC<{
   };
 
   return (
-    <div className="flex items-center justify-between rounded-lg border border-gray-200 p-4 hover:bg-gray-50">
+    <div className="flex items-center justify-between rounded-lg border p-4">
       <div className="flex items-center gap-3">
         <RadioGroupItem
           className="cursor-pointer"
@@ -179,7 +180,7 @@ const APIModelListItem: FC<{
           disabled={!isSelectable}
         />
         <Label
-          className={`cursor-pointer ${!isSelectable ? "text-gray-400" : ""}`}
+          className={`cursor-pointer ${!isSelectable ? "text-muted-foreground" : ""}`}
         >
           {config.modelName}
         </Label>
@@ -188,7 +189,7 @@ const APIModelListItem: FC<{
         <DialogTrigger asChild>
           <Button
             size="sm"
-            variant={isSelectable ? "default" : "outline"}
+            variant={isSelectable ? "outline" : "default"}
             className="cursor-pointer gap-2"
             suppressHydrationWarning
           >
@@ -206,16 +207,17 @@ const APIModelListItem: FC<{
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4">
-            <div className="space-y-2">
+            <form className="space-y-2">
               <Label htmlFor="apikey-input">API key</Label>
               <Input
                 id="apikey-input"
                 type="password"
+                autoComplete="off"
                 placeholder="Enter your API key"
                 value={apiKeyInput}
                 onChange={(e) => setApiKeyInput(e.target.value)}
               />
-            </div>
+            </form>
             <div className="flex justify-end gap-2">
               <Button
                 className="cursor-pointer"
@@ -278,80 +280,76 @@ export default function ModelsPage() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-gray-50 p-8">
+    <div className="h-full overflow-y-auto p-8">
       <div className="mx-auto max-w-4xl">
-        <h1 className="mb-8 text-3xl font-bold text-gray-900">Models</h1>
+        <h1 className="mb-8 text-3xl font-bold text-primary">Models</h1>
 
-        <div className="mb-6 rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-          {/* Local Models */}
-          <div className="mb-8">
-            <h3 className="mb-4 text-lg font-bold text-gray-800">
-              Local Models
-            </h3>
-            <div className="space-y-3">
-              <RadioGroup
-                value={selectedModel?.modelName}
-                onValueChange={handleSelectModel}
-              >
-                {LOCAL_MODELS.map((config) => (
-                  <LocalModelListItem
-                    key={config.modelName}
-                    modelName={config.modelName}
-                  />
-                ))}
-              </RadioGroup>
-              {!isWebGPUSupported && (
-                <p className="text-red-600">
-                  Your environment does not support WebGPU acceleration. Try
-                  using API models instead.
-                </p>
-              )}
-            </div>
-          </div>
-
-          {/* API Models */}
-          <div className="mb-8">
-            <h3 className="mb-4 text-lg font-bold text-gray-800">API Models</h3>
-            <div className="space-y-3">
-              <RadioGroup
-                value={selectedModel?.modelName}
-                onValueChange={handleSelectModel}
-              >
-                {API_MODELS.map((config) => (
-                  <APIModelListItem key={config.modelName} config={config} />
-                ))}
-              </RadioGroup>
-            </div>
-          </div>
-
-          {/* Agent Run Config */}
-          <div>
-            <h3 className="mb-4 text-lg font-bold text-gray-800">
-              Agent Configuration
-            </h3>
-            <div className="space-y-4">
-              {/* Reasoning */}
-              <div className="flex gap-4">
-                <Label htmlFor="reasoning">Reasoning</Label>
-                <Switch
-                  id="reasoning"
-                  className="cursor-pointer"
-                  checked={agentRunConfig.inference?.thinkEffort === "enable"}
-                  onCheckedChange={handleReasoningToggle}
+        {/* Local Models */}
+        <div className="mb-8">
+          <h3 className="mb-4 text-lg font-bold text-primary">Local Models</h3>
+          <div className="space-y-3">
+            <RadioGroup
+              value={selectedModel?.modelName ?? ""}
+              onValueChange={handleSelectModel}
+            >
+              {LOCAL_MODELS.map((config) => (
+                <LocalModelListItem
+                  key={config.modelName}
+                  modelName={config.modelName}
                 />
-              </div>
+              ))}
+            </RadioGroup>
+            {!isWebGPUSupported && (
+              <p className="text-destructive">
+                Your environment does not support WebGPU acceleration. Try using
+                API models instead.
+              </p>
+            )}
+          </div>
+        </div>
 
-              {/* System Prompt */}
-              <div className="space-y-2">
-                <Label htmlFor="system-prompt">System Prompt</Label>
-                <Input
-                  id="system-prompt"
-                  className="w-full"
-                  placeholder="Write the system prompt for your agent"
-                  value={systemPrompt}
-                  onChange={(e) => setSystemPrompt(e.target.value)}
-                />
-              </div>
+        {/* API Models */}
+        <div className="mb-8">
+          <h3 className="mb-4 text-lg font-bold text-primary">API Models</h3>
+          <div className="space-y-3">
+            <RadioGroup
+              value={selectedModel?.modelName ?? ""}
+              onValueChange={handleSelectModel}
+            >
+              {API_MODELS.map((config) => (
+                <APIModelListItem key={config.modelName} config={config} />
+              ))}
+            </RadioGroup>
+          </div>
+        </div>
+
+        {/* Agent Run Config */}
+        <div>
+          <h3 className="mb-4 text-lg font-bold text-primary">
+            Agent Configuration
+          </h3>
+          <div className="space-y-4">
+            {/* Reasoning */}
+            <div className="flex gap-4">
+              <Label htmlFor="reasoning">Reasoning</Label>
+              <Switch
+                id="reasoning"
+                className="cursor-pointer"
+                checked={agentRunConfig.inference?.thinkEffort === "enable"}
+                onCheckedChange={handleReasoningToggle}
+              />
+            </div>
+
+            {/* System Prompt */}
+            <div className="space-y-2">
+              <Label htmlFor="system-prompt">System Prompt</Label>
+              <Textarea
+                id="system-prompt"
+                className="w-full"
+                placeholder="Write the system prompt for your agent"
+                value={systemPrompt}
+                onChange={(e) => setSystemPrompt(e.target.value)}
+              />
             </div>
           </div>
         </div>
