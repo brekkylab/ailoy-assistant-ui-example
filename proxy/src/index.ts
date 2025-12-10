@@ -187,7 +187,7 @@ async function fetchWithRedirects(
 
 function getCorsHeaders(): Record<string, string> {
   return {
-    "Access-Control-Allow-Origin": "https://web-example.ailoy.co",
+    "Access-Control-Allow-Origin": "https://webui.ailoy.co",
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "Content-Type",
   };
