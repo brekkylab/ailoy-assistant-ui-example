@@ -116,6 +116,7 @@ export type OutData =
 async function initializeLocalAgent(config: AiloyLocalLMConfig) {
   try {
     const model = await ai.LangModel.newLocal(config.modelName, {
+      validateChecksum: false, // to speed up initialization
       progressCallback: (prog) => {
         self.postMessage({
           type: "langmodel-init-progress",
