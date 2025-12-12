@@ -244,7 +244,7 @@ const LOCAL_MODELS: AiloyLocalLMConfig[] = [
 ];
 
 const API_MODELS: AiloyAPILMConfig[] = [
-  { type: "api", spec: "OpenAI", modelName: "gpt-4o" },
+  { type: "api", spec: "OpenAI", modelName: "gpt-5.2" },
   { type: "api", spec: "Gemini", modelName: "gemini-2.5-flash" },
   { type: "api", spec: "Claude", modelName: "claude-sonnet-4-5" },
   { type: "api", spec: "Grok", modelName: "grok-4-fast" },

@@ -2,6 +2,7 @@ import * as ai from "ailoy-web";
 import {
   createContext,
   type ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -85,7 +86,7 @@ const AiloyAgentContext = createContext<{
   selectedMCPTools: Record<string, string[]>;
   addMCPTool: (url: string, name: string) => void;
   removeMCPTool: (url: string, name: string) => void;
-  runAgent: (messages: ai.Message[], config?: ai.AgentConfig) => void;
+  runAgent: (messages: ai.Message[]) => void;
 }>({
   isWebGPUSupported: false,
   agentInitialized: false,
@@ -368,14 +369,25 @@ export function AiloyAgentProvider({
     } as RemoveTool);
   };
 
-  const runAgent = (messages: ai.Message[], config?: ai.AgentConfig) => {
-    if (!agentInitialized) return;
-    agentWorkerRef.current?.postMessage({
-      type: "run-agent",
-      messages,
-      config,
-    } as RunAgent);
-  };
+  const runAgent = useCallback(
+    (messages: ai.Message[]) => {
+      if (!agentInitialized) return;
+
+      if (systemPrompt !== "") {
+        messages = [
+          { role: "system", contents: [{ type: "text", text: systemPrompt }] },
+          ...messages,
+        ];
+      }
+
+      agentWorkerRef.current?.postMessage({
+        type: "run-agent",
+        messages,
+        agentRunConfig,
+      } as RunAgent);
+    },
+    [agentInitialized, systemPrompt, agentRunConfig],
+  );
 
   return (
     <AiloyAgentContext.Provider

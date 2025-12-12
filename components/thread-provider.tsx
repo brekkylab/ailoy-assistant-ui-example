@@ -24,6 +24,7 @@ const ThreadContext = createContext<{
   >;
   currentThreadMessages: AssistantUiMessage[];
   appendThreadMessage: (threadId: string, message: AssistantUiMessage) => void;
+  setThreadMessages: (threadId: string, messages: AssistantUiMessage[]) => void;
   renameThread: (threadId: string, newTitle: string) => void;
   threadListAdapter: ExternalStoreThreadListAdapter;
 }>({
@@ -33,6 +34,7 @@ const ThreadContext = createContext<{
   setThreads: () => {},
   currentThreadMessages: [],
   appendThreadMessage: () => {},
+  setThreadMessages: () => {},
   renameThread: () => {},
   threadListAdapter: {},
 });
@@ -58,6 +60,17 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
       const next = new Map(prev);
       const messages = next.get(threadId) ?? [];
       next.set(threadId, [...messages, newMessage]);
+      return next;
+    });
+  };
+
+  const setThreadMessages = (
+    threadId: string,
+    messages: AssistantUiMessage[],
+  ) => {
+    setThreads((prev) => {
+      const next = new Map(prev);
+      next.set(threadId, messages);
       return next;
     });
   };
@@ -124,6 +137,7 @@ export function ThreadProvider({ children }: { children: ReactNode }) {
         setThreads,
         currentThreadMessages,
         appendThreadMessage,
+        setThreadMessages,
         renameThread,
         threadListAdapter,
       }}

@@ -4,6 +4,7 @@ import {
   CompositeAttachmentAdapter,
   SimpleImageAttachmentAdapter,
   SimpleTextAttachmentAdapter,
+  type TextMessagePart,
   useExternalMessageConverter,
   useExternalStoreRuntime,
 } from "@assistant-ui/react";
@@ -36,13 +37,13 @@ export function AiloyRuntimeProvider({
   );
   const [isAnswering, setIsAnswering] = useState<boolean>(false);
 
-  const { agentInitialized, agentRunConfig, runAgent, systemPrompt } =
-    useAiloyAgentContext();
+  const { agentInitialized, runAgent } = useAiloyAgentContext();
 
   const {
     currentThreadId,
     currentThreadMessages,
     appendThreadMessage,
+    setThreadMessages,
     renameThread,
     threadListAdapter,
   } = useThreadContext();
@@ -94,11 +95,9 @@ export function AiloyRuntimeProvider({
     setIsAnswering(false);
   };
 
-  const onNew = useCallback(
-    async (message: AppendMessage) => {
-      if (!agentInitialized) throw new Error("Agent is not initialized yet");
-
-      const userContents: ai.Part[] = [];
+  const convertAppendMessage = useCallback(
+    async (message: AppendMessage): Promise<ai.Message> => {
+      const contents: ai.Part[] = [];
 
       // Add attachments
       if (message.attachments !== undefined) {
@@ -108,47 +107,99 @@ export function AiloyRuntimeProvider({
             const ab = await attach.file!.arrayBuffer();
             const arr = new Uint8Array(ab);
             const imagePart = ai.imageFromBytes(arr);
-            userContents.push(imagePart);
+            contents.push(imagePart);
           }
           // other types are skipped
         }
       }
 
-      // Add text prompt
+      // Append text part
       if (message.content[0]?.type !== "text")
         throw new Error("Only text messages are supported");
-      userContents.push({ type: "text", text: message.content[0].text });
+      contents.push({ type: "text", text: message.content[0].text });
 
-      // Set messages
-      const newMessage: ai.Message = {
+      return {
         role: "user",
-        contents: userContents,
+        contents,
       };
+    },
+    [],
+  );
+
+  const onNew = useCallback(
+    async (message: AppendMessage) => {
+      if (!agentInitialized) throw new Error("Agent is not initialized yet");
+
+      const newMessage = await convertAppendMessage(message);
       appendThreadMessage(currentThreadId, convertMessage(newMessage));
       // Rename thread if this is a first message in this thread
       if (currentThreadMessages.length === 0) {
-        renameThread(currentThreadId, message.content[0].text.substring(0, 30));
+        renameThread(
+          currentThreadId,
+          (message.content[0] as TextMessagePart).text.substring(0, 30),
+        );
       }
 
-      // Run agent with messages and config
-      let msgs = [...restoreMessages(currentThreadMessages), newMessage];
-      if (systemPrompt !== "") {
-        msgs = [
-          { role: "system", contents: [{ type: "text", text: systemPrompt }] },
-          ...msgs,
-        ];
-      }
-      runAgent(msgs, agentRunConfig);
+      runAgent([...restoreMessages(currentThreadMessages), newMessage]);
       setIsAnswering(true);
     },
     [
       agentInitialized,
       currentThreadId,
       currentThreadMessages,
-      agentRunConfig,
-      systemPrompt,
+      convertAppendMessage,
       appendThreadMessage,
       renameThread,
+      runAgent,
+    ],
+  );
+
+  const onEdit = useCallback(
+    async (message: AppendMessage) => {
+      if (!agentInitialized) return;
+      const parentIdNum =
+        message.parentId !== null ? Number.parseInt(message.parentId, 10) : 0;
+      const slicedMessages = currentThreadMessages.slice(0, parentIdNum);
+      const editedMessage = await convertAppendMessage(message);
+      const messages = [...slicedMessages, convertMessage(editedMessage)];
+      setThreadMessages(currentThreadId, messages);
+      // Rename thread if this is a first message in this thread
+      if (messages.length === 1) {
+        renameThread(
+          currentThreadId,
+          (message.content[0] as TextMessagePart).text.substring(0, 30),
+        );
+      }
+
+      runAgent(restoreMessages(messages));
+      setIsAnswering(true);
+    },
+    [
+      agentInitialized,
+      currentThreadId,
+      currentThreadMessages,
+      convertAppendMessage,
+      setThreadMessages,
+      renameThread,
+      runAgent,
+    ],
+  );
+
+  const onReload = useCallback(
+    async (parentId: string | null) => {
+      if (!agentInitialized) return;
+      const parentIdNum = parentId !== null ? Number.parseInt(parentId, 10) : 0;
+      const slicedMessages = currentThreadMessages.slice(0, parentIdNum + 1);
+      setThreadMessages(currentThreadId, slicedMessages);
+
+      runAgent(restoreMessages(slicedMessages));
+      setIsAnswering(true);
+    },
+    [
+      agentInitialized,
+      currentThreadMessages,
+      currentThreadId,
+      setThreadMessages,
       runAgent,
     ],
   );
@@ -171,6 +222,8 @@ export function AiloyRuntimeProvider({
       isRunning: isAnswering,
     }),
     onNew,
+    onEdit,
+    onReload,
     adapters: {
       attachments: new CompositeAttachmentAdapter([
         new SimpleImageAttachmentAdapter(),
