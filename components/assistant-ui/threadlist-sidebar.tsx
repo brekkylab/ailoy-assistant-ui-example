@@ -1,4 +1,4 @@
-import { Brain, Mail, MessageSquare, Wrench } from "lucide-react";
+import { Brain, CircleAlert, Mail, MessageSquare, Wrench } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -42,22 +42,16 @@ const ContactsButton: React.FC = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <SidebarMenuButton size="lg" asChild className="cursor-pointer">
+        <SidebarMenuButton size="sm" asChild className="cursor-pointer">
           <div>
-            <div className="aui-sidebar-footer-icon-wrapper flex aspect-square size-8 items-center justify-center">
+            <div className="aui-sidebar-footer-icon-wrapper flex aspect-square size-4 items-center justify-center">
               <img
                 src={`/img/brekkylab-logo-${theme === "light" ? "black" : "white"}.png`}
                 alt="brekkylab"
               />
             </div>
             <div className="aui-sidebar-footer-heading flex flex-col gap-0.5 leading-none text-muted-foreground">
-              <p>Need a help?</p>
-              <p>
-                Contact to{" "}
-                <span className=" font-semibold text-accent-foreground">
-                  BrekkyLab
-                </span>
-              </p>
+              <p>Contacts</p>
             </div>
           </div>
         </SidebarMenuButton>
@@ -74,15 +68,6 @@ const ContactsButton: React.FC = () => {
             <DropdownMenuItem>
               <Icons.discord className="h-[1.5rem] w-[1.5rem] scale-100" />
               Discord
-            </DropdownMenuItem>
-          </Link>
-          <Link
-            href="https://github.com/brekkylab/ailoy/issues"
-            target="_blank"
-          >
-            <DropdownMenuItem>
-              <Icons.github className="h-[1.5rem] w-[1.5rem] scale-100" />
-              Github Issues
             </DropdownMenuItem>
           </Link>
         </DropdownMenuGroup>
@@ -135,6 +120,7 @@ export function ThreadListSidebar({
       <SidebarContent className="aui-sidebar-content px-2">
         <SidebarMenuItem>
           <SidebarMenuButton
+            size="lg"
             className="cursor-pointer"
             onClick={() => handleMenuClicked("/")}
           >
@@ -144,6 +130,7 @@ export function ThreadListSidebar({
         </SidebarMenuItem>
         <SidebarMenuItem>
           <SidebarMenuButton
+            size="lg"
             className="cursor-pointer"
             onClick={() => handleMenuClicked("/models")}
           >
@@ -153,6 +140,7 @@ export function ThreadListSidebar({
         </SidebarMenuItem>
         <SidebarMenuItem>
           <SidebarMenuButton
+            size="lg"
             className="cursor-pointer"
             onClick={() => handleMenuClicked("/tools")}
           >
@@ -171,9 +159,24 @@ export function ThreadListSidebar({
             <ContactsButton />
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" asChild>
+            <SidebarMenuButton size="sm" asChild>
+              <Link
+                href="https://github.com/brekkylab/ailoy/issues"
+                target="_blank"
+              >
+                <div className="aui-sidebar-footer-icon-wrapper flex aspect-square size-4 items-center justify-center">
+                  <CircleAlert className="scale-100" />
+                </div>
+                <div className="aui-sidebar-footer-heading flex flex-col gap-0.5 leading-none text-muted-foreground">
+                  <p>Report an Issue</p>
+                </div>
+              </Link>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="sm" asChild>
               <Link href="https://brekkylab.github.io/ailoy" target="_blank">
-                <div className="aui-sidebar-footer-icon-wrapper flex aspect-square size-8 items-center justify-center">
+                <div className="aui-sidebar-footer-icon-wrapper flex aspect-square size-4 items-center justify-center">
                   <img
                     src="https://brekkylab.github.io/ailoy/img/logo.png"
                     alt="ailoy"
@@ -186,7 +189,6 @@ export function ThreadListSidebar({
                       Ailoy
                     </span>
                   </p>
-                  <span>View Documentation</span>
                 </div>
               </Link>
             </SidebarMenuButton>

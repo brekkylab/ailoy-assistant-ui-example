@@ -113,10 +113,23 @@ export type OutData =
   | MCPServerRegistered
   | ErrorMessage;
 
+function isMobile() {
+  const mobileRegex =
+    /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+  return mobileRegex.test(navigator.userAgent);
+}
+
 async function initializeLocalAgent(config: AiloyLocalLMConfig) {
   try {
+    // Set context window size to 4096 on mobile devices.
+    // This is a naive approach, we need to calculate more accurate value in the future.
+    const contextWindowSize = isMobile() ? 128 : 40960;
+
     const model = await ai.LangModel.newLocal(config.modelName, {
       validateChecksum: false, // to speed up initialization
+      kvCache: {
+        contextWindowSize,
+      },
       progressCallback: (prog) => {
         self.postMessage({
           type: "langmodel-init-progress",

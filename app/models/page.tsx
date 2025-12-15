@@ -21,6 +21,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
@@ -28,13 +33,22 @@ import { Textarea } from "@/components/ui/textarea";
 
 const LocalModelListItem: FC<{
   modelName: string;
-}> = ({ modelName }) => {
+  description?: string;
+  webgpuBufferSizeLimit: number;
+  webgpuStorageBufferBindingSizeLimit: number;
+}> = ({
+  modelName,
+  description,
+  webgpuBufferSizeLimit,
+  webgpuStorageBufferBindingSizeLimit,
+}) => {
   const {
     downloadedModels,
     setDownloadedModels,
     selectedModel,
     setSelectedModel,
     isWebGPUSupported,
+    webgpuLimits,
     isModelLoading,
     modelLoadingProgress,
   } = useAiloyAgentContext();
@@ -44,6 +58,20 @@ const LocalModelListItem: FC<{
   }, [downloadedModels, modelName]);
   const [downloading, setDownloading] = useState<boolean>(false);
   const [progress, setProgress] = useState<number>(0);
+
+  const isModelSupported = useMemo(() => {
+    return (
+      isWebGPUSupported &&
+      (webgpuLimits?.maxBufferSize ?? 0) >= webgpuBufferSizeLimit &&
+      (webgpuLimits?.maxStorageBufferBindingSize ?? 0) >=
+        webgpuStorageBufferBindingSizeLimit
+    );
+  }, [
+    isWebGPUSupported,
+    webgpuLimits,
+    webgpuBufferSizeLimit,
+    webgpuStorageBufferBindingSizeLimit,
+  ]);
 
   const isCurrentModelLoading = useMemo(() => {
     return selectedModel?.modelName === modelName && isModelLoading;
@@ -97,19 +125,39 @@ const LocalModelListItem: FC<{
             id={modelName}
             disabled={!downloaded}
           />
-          <Label
-            htmlFor={modelName}
-            className={`cursor-pointer ${!downloaded ? "text-gray-400" : ""}`}
-          >
-            {modelName}
-          </Label>
+          <div className="flex flex-col gap-2">
+            <Label
+              htmlFor={modelName}
+              className={`cursor-pointer ${!downloaded ? "text-muted-foreground" : ""}`}
+            >
+              {modelName}
+            </Label>
+            {description && (
+              <p className="text-xs text-muted-foreground">{description}</p>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
-          {!downloaded ? (
+          {!isModelSupported ? (
+            <Popover>
+              <PopoverTrigger>
+                <Button size="sm" disabled className="gap-2">
+                  <Download size={16} />
+                  <span className="hidden sm:inline">Download</span>
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="p-0">
+                <p className="text-xs p-2 text-muted-foreground">
+                  Your environment cannot run this model due to the wegbpu
+                  device limits.
+                </p>
+              </PopoverContent>
+            </Popover>
+          ) : !downloaded ? (
             <Button
               size="sm"
               onClick={handleDownloadModel}
-              disabled={!isWebGPUSupported || downloading}
+              disabled={!isModelSupported || downloading}
               className="cursor-pointer gap-2"
             >
               {downloading ? <Spinner /> : <Download size={16} />}
@@ -120,7 +168,7 @@ const LocalModelListItem: FC<{
           ) : isCurrentModelLoading ? (
             <Button size="sm" variant="outline" disabled>
               <Spinner />
-              <span className="hiddne sm:inline">Loading</span>
+              <span className="hidden sm:inline">Loading</span>
             </Button>
           ) : (
             <Button
@@ -237,10 +285,46 @@ const APIModelListItem: FC<{
   );
 };
 
-const LOCAL_MODELS: AiloyLocalLMConfig[] = [
-  { type: "local", modelName: "Qwen/Qwen3-0.6B" },
-  { type: "local", modelName: "Qwen/Qwen3-1.7B" },
-  { type: "local", modelName: "Qwen/Qwen3-4B" },
+const MB = 1 << 20;
+const GB = 1 << 30;
+
+const LOCAL_MODELS: (AiloyLocalLMConfig & {
+  description?: string;
+  webgpuBufferSizeLimit: number;
+  webgpuStorageBufferBindingSizeLimit: number;
+})[] = [
+  {
+    type: "local",
+    modelName: "Qwen/Qwen3-0.6B",
+    webgpuBufferSizeLimit: 2 * GB,
+    webgpuStorageBufferBindingSizeLimit: 128 * MB,
+  },
+  {
+    type: "local",
+    modelName: "Qwen/Qwen3-1.7B",
+    webgpuBufferSizeLimit: 2 * GB,
+    webgpuStorageBufferBindingSizeLimit: 256 * MB,
+  },
+  {
+    type: "local",
+    modelName: "Qwen/Qwen3-4B",
+    webgpuBufferSizeLimit: 4 * GB,
+    webgpuStorageBufferBindingSizeLimit: 1 * GB,
+  },
+  {
+    type: "local",
+    modelName: "Qwen/Qwen3-4B-Instruct-2507",
+    description: "This model does not do reasoning.",
+    webgpuBufferSizeLimit: 4 * GB,
+    webgpuStorageBufferBindingSizeLimit: 1 * GB,
+  },
+  {
+    type: "local",
+    modelName: "Qwen/Qwen3-4B-Thinking-2507",
+    description: "This model always do reasoning.",
+    webgpuBufferSizeLimit: 4 * GB,
+    webgpuStorageBufferBindingSizeLimit: 1 * GB,
+  },
 ];
 
 const API_MODELS: AiloyAPILMConfig[] = [
@@ -296,6 +380,11 @@ export default function ModelsPage() {
                 <LocalModelListItem
                   key={config.modelName}
                   modelName={config.modelName}
+                  description={config.description}
+                  webgpuBufferSizeLimit={config.webgpuBufferSizeLimit}
+                  webgpuStorageBufferBindingSizeLimit={
+                    config.webgpuStorageBufferBindingSizeLimit
+                  }
                 />
               ))}
             </RadioGroup>

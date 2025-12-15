@@ -64,6 +64,7 @@ export const mcpEventTarget = new MCPEventTarget();
 
 const AiloyAgentContext = createContext<{
   isWebGPUSupported: boolean;
+  webgpuLimits: GPUAdapter["limits"] | undefined;
   agentInitialized: boolean;
   isModelLoading: boolean;
   modelLoadingProgress: ai.CacheProgress | undefined;
@@ -89,6 +90,7 @@ const AiloyAgentContext = createContext<{
   runAgent: (messages: ai.Message[]) => void;
 }>({
   isWebGPUSupported: false,
+  webgpuLimits: undefined,
   agentInitialized: false,
   isModelLoading: false,
   modelLoadingProgress: undefined,
@@ -118,6 +120,9 @@ export function AiloyAgentProvider({
   children,
 }: Readonly<{ children: ReactNode }>) {
   const [isWebGPUSupported, setIsWebGPUSupported] = useState<boolean>(false);
+  const [webgpuLimits, setWebgpuLimits] = useState<
+    GPUAdapter["limits"] | undefined
+  >(undefined);
   const [downloadedModels, setDownloadedModels] = useLocalStorage<string[]>(
     "ailoy/downloadedModels",
     [],
@@ -171,6 +176,11 @@ export function AiloyAgentProvider({
     (async () => {
       const { supported } = await ai.isWebGPUSupported();
       setIsWebGPUSupported(supported);
+
+      if (supported) {
+        const adapter = await navigator.gpu.requestAdapter();
+        setWebgpuLimits(adapter?.limits);
+      }
     })();
   }, []);
 
@@ -393,6 +403,7 @@ export function AiloyAgentProvider({
     <AiloyAgentContext.Provider
       value={{
         isWebGPUSupported,
+        webgpuLimits,
         agentInitialized,
         isModelLoading,
         modelLoadingProgress,
