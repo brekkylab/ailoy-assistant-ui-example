@@ -121,9 +121,9 @@ function isMobile() {
 
 async function initializeLocalAgent(config: AiloyLocalLMConfig) {
   try {
-    // Set context window size to 4096 on mobile devices.
+    // Set context window size to 10240 on mobile devices.
     // This is a naive approach, we need to calculate more accurate value in the future.
-    const contextWindowSize = isMobile() ? 128 : 40960;
+    const contextWindowSize = isMobile() ? 10240 : 40960;
 
     const model = await ai.LangModel.newLocal(config.modelName, {
       validateChecksum: false, // to speed up initialization
