@@ -4,9 +4,6 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
-overrides:
-  ailoy-web: link:../ailoy/bindings/web
-
 importers:
 
   .:
@@ -72,8 +69,8 @@ importers:
         specifier: ^5.0.95
         version: 5.0.95(zod@4.1.12)
       ailoy-web:
-        specifier: link:../ailoy/bindings/web
-        version: link:../ailoy/bindings/web
+        specifier: ^0.2.3
+        version: 0.2.3
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1517,6 +1514,9 @@ packages:
     engines: {node: '>=18'}
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
+
+  ailoy-web@0.2.3:
+    resolution: {integrity: sha512-lFeaisBZyskG8kqgp6Zu2dDky0ac/4uMsrjsHCAHrSol4tndAAlr+9g0o8b9O0B0NJzC9thEeUy2XkSmRGgevA==}
 
   ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
@@ -4729,6 +4729,8 @@ snapshots:
       '@ai-sdk/provider-utils': 3.0.17(zod@4.1.12)
       '@opentelemetry/api': 1.9.0
       zod: 4.1.12
+
+  ailoy-web@0.2.3: {}
 
   ajv@6.12.6:
     dependencies:
