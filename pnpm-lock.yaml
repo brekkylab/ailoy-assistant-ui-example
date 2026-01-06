@@ -69,8 +69,8 @@ importers:
         specifier: ^5.0.95
         version: 5.0.95(zod@4.1.12)
       ailoy-web:
-        specifier: ^0.2.3
-        version: 0.2.3
+        specifier: ^0.2.4
+        version: 0.2.4
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -1515,8 +1515,8 @@ packages:
     peerDependencies:
       zod: ^3.25.76 || ^4.1.8
 
-  ailoy-web@0.2.3:
-    resolution: {integrity: sha512-lFeaisBZyskG8kqgp6Zu2dDky0ac/4uMsrjsHCAHrSol4tndAAlr+9g0o8b9O0B0NJzC9thEeUy2XkSmRGgevA==}
+  ailoy-web@0.2.4:
+    resolution: {integrity: sha512-cQ/xIPvZYYF//YfNIRa8iSsdVasIWyC8aLrJxJLzBKuTi4+auI7Lah1Z+mUM6SHo9BOdWjFxTv6lA+6GGYkEcw==}
 
   ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
@@ -4730,7 +4730,7 @@ snapshots:
       '@opentelemetry/api': 1.9.0
       zod: 4.1.12
 
-  ailoy-web@0.2.3: {}
+  ailoy-web@0.2.4: {}
 
   ajv@6.12.6:
     dependencies:

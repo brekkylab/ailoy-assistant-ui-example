@@ -325,6 +325,12 @@ const LOCAL_MODELS: (AiloyLocalLMConfig & {
     webgpuBufferSizeLimit: 4 * GB,
     webgpuStorageBufferBindingSizeLimit: 1 * GB,
   },
+  {
+    type: "local",
+    modelName: "Qwen/Qwen3-8B",
+    webgpuBufferSizeLimit: 4 * GB,
+    webgpuStorageBufferBindingSizeLimit: 1 * GB,
+  },
 ];
 
 const API_MODELS: AiloyAPILMConfig[] = [
